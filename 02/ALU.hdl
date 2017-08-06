@@ -42,5 +42,31 @@ CHIP ALU {
         ng; // 1 if (out < 0),  0 otherwise
 
     PARTS:
-   // Put you code here:
+
+    // zx selector
+    Mux16(a = x, b = false, sel = zx, out = x1);
+
+    // nx selector
+    Not16(in = x1, out = notx1);
+    Mux16(a = x1, b = notx1, sel = nx, out = x2);
+
+    // repeat for y
+    Mux16(a = y, b = false, sel = zy, out = y1);
+    Not16(in = y1, out = noty1);
+    Mux16(a = y1, b = noty1, sel = ny, out = y2);
+
+    // f selector
+    And16(a = x2, b = y2, out = w1);
+    Add16(a = x2, b = y2, out = w2);
+    Mux16(a = w1, b = w2, sel = f, out = z);
+
+    // no selector (and split output to determine status outputs)
+    Not16(in = z, out = notz);
+    Mux16(a = z, b = notz, sel = no, out[0..7] = byte1, out[8..15] = byte2, out[15] = ng, out = out);
+
+    // ng already determined, now check if zr (all bits 0)
+    Or8Way(in = byte1, out = pos1);
+    Or8Way(in = byte2, out = pos2);
+    Or(a = pos1, b = pos2, out = pos);
+    Not(in = pos, out = zr);
 }
